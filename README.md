@@ -2,23 +2,32 @@
 
 Contains all the useful scripts for performing experiments with LBP and its variants.
 
-Note: Run the following commands in the project's root directory
+## Operating Enviroment
 
-- Operational System: Debian 10 Buster
-- Python 3.7.3
+- Operational System: Debian 10 Buster and Ubuntu 20.04
+- Python 3.7
+
+## To install, run the following commands in the user directory on Linux.
 
 ```bash
-# Install Virtual Enviroment (Optional but high recommended):
+# Download Anaconda from the official site (https://www.anaconda.com/products/individual#Downloads).
+  $ wget https://repo.anaconda.com/archive/Anaconda3-2020.11-Linux-x86_64.sh
+  
+# Install Anaconda
+  $ bash Anaconda3-2020.11-Linux-x86_64.sh
 
-  $ pip install virtualenv (or `pip3 install virtualenv`)
+# Follow the steps showed and continue (sometimes, it is necessary restart the terminal).
 
 # Create a vitural enviroment for experimentation:
 
-  $ virtualenv venv_lbp
+  $ conda create -n venv_lbp python=3.7
 
-# Activate the enviroment created
+# Activate the enviroment created:
 
-  $ source venv_lbp/bin/activate
+  $ conda activate venv_lbp
+
+# Change to github diretory:
+  $ cd tcc/
 
 # Install Librarys requireds:
 
@@ -29,14 +38,14 @@ Note: Run the following commands in the project's root directory
   $ python setup.py build_ext --inplace
 ```
 
-Example of use
+## Example of use
 
 ```bash
 # If you need of some help, run:
   $ python exec_run.py -h
   
   usage: exec_run.py [-h] --dataset DATASET --variant VARIANT [--method METHOD]
-                     [--points POINTS] [--radius RADIUS]
+                     [--points POINTS] [--radius RADIUS] 
                      [--size_train SIZE_TRAIN] [--output OUTPUT] [--load LOAD]
 
   optional arguments:
@@ -65,10 +74,15 @@ Example of use
 # For example, when running:
   $ python exec_run.py -d path_dataset -v completed_lbp -m uniform -p 8 -r 1 -s 0.8 -o results -l False
   
-The code will perform the calculation of the Completed LBP descriptor on the ´path_dataset´ dataset using the uniform and invariant method of rotation, parameters P and R equal to 8 and 1, respectively, separating a total of 80% for training and the rest for testing .
+The code will perform the calculation of the Completed LBP descriptor on the ´path_dataset´ dataset using 
+the uniform and invariant method of rotation, parameters P and R equal to 8 and 1, respectively, separating a
+total of 80% for training and the rest for validation and testing, equaly.
 
-The ´-o´ parameter indicates a folder where the results will be stored. If this folder does not exist, the program will automatically create it.
+The ´-o´ parameter indicates a folder where the results will be stored. If this folder does not exist,
+the program will automatically create it.
 
-The ´-l´ parameter is a boolean indicating whether you want to load the calculated descriptors in a `.txt` file so that it is not necessary to recalculate them. If you are going to run the experiment for the first time, this argument should be ignored.
+The ´-l´ parameter is a boolean indicating whether you want to load the calculated descriptors in a `.txt` 
+file so that it is not necessary to recalculate them. If you are going to run the experiment for the first
+time, this argument should be ignored.
 
 ```
