@@ -15,8 +15,8 @@ from sklearn.neighbors import KNeighborsClassifier
 # descritores de textura analisados
 from lbp_module.texture import original_lbp, improved_lbp, hamming_lbp, completed_lbp, extended_lbp
 from utils.features import compute_features
-from utils.plotting import plot_results
 from utils.metrics import MyGridSearch
+from utils.plotting import plot_results
 
 # ignorando mensagens de aviso no terminal
 warnings.filterwarnings("ignore")
@@ -30,9 +30,9 @@ ALGORITHM = {
     'extended_lbp': [extended_lbp, 'EXTENDED LBP'],
 }
 
-def add_to_df(_id, variant, method, P, R, param, matthews, f1score, accuracy, matrix, auc_roc, n_features, is_validation):
+def add_to_df(name_clf, variant, method, P, R, param, matthews, f1score, accuracy, matrix, auc_roc, n_features, is_validation):
     _dic_df = {}
-    _dic_df['classifier'] = _id
+    _dic_df['classifier'] = name_clf
     _dic_df['variant'] = variant
     _dic_df['method'] = method
     _dic_df['(P, R)'] = (P, R)
@@ -51,7 +51,7 @@ def run(dataset, variant, method, P, R, size_train_percent, size_val_percent, si
     print(30 * ' * ')
     print('Experimento: Descritor={}, Method={}, P = {}, R = {}'.format(ALGORITHM[variant][1], method, P, R))
 
-    path_cur = os.path.join(output, 'descriptors', variant +'_'+ method + '_' + str(P) +'_' +str(R)) 
+    path_cur = os.path.join(output, 'descriptors', ALGORITHM[variant][1], method.upper() + '_' + str(P) +'_' +str(R)) 
     if not load_descriptors: # Computar os descritores de cada imagem do dataset
         print('Computando recursos...')
         x_train, y_train, x_val, y_val, x_test, y_test = compute_features(path_dataset=dataset, \
@@ -90,14 +90,19 @@ def run(dataset, variant, method, P, R, size_train_percent, size_val_percent, si
             print("Descritores não computados. Insira um caminho valido.")
             quit()
     
-    if not os.path.exists(output + '/ARR_ROC'):
-        os.makedirs(output + '/ARR_ROC')
+    path_roc_variant = os.path.join(output, 'ARR_ROC', ALGORITHM[variant][1], 'y_true_val')
+    if not os.path.exists(path_roc_variant):
+        os.makedirs(path_roc_variant)
+
+    path_roc_variant = os.path.join(output, 'ARR_ROC', ALGORITHM[variant][1], 'y_true_test')
+    if not os.path.exists(path_roc_variant):
+        os.makedirs(path_roc_variant)
     
     # armazenando Y true utilizado para validacao e test 
-    arr_filename = os.path.join(output, 'ARR_ROC', '{}_y_true_val_{}_{}_{}.txt'.format(variant, method, P, R))
-    np.savetxt(arr_filename, y_val)
-    arr_filename = os.path.join(output,'ARR_ROC','{}_y_true_test_{}_{}_{}.txt'.format(variant, method, P, R))
-    np.savetxt(arr_filename, y_test)
+    arr_filename_true_val = os.path.join(output, 'ARR_ROC', ALGORITHM[variant][1], 'y_true_val', '{}_{}_{}.txt'.format(method.upper(), P, R))
+    np.savetxt(arr_filename_true_val, y_val)
+    arr_filename_true_test = os.path.join(output,'ARR_ROC', ALGORITHM[variant][1], 'y_true_test', '{}_{}_{}.txt'.format(method.upper(), P, R))
+    np.savetxt(arr_filename_true_test, y_test)
     
     # Dataframe onde sera guardado os resultados dos experimentos
     # sempre sera adicionado novos valores ao final do arquivo, 
@@ -153,12 +158,12 @@ def run(dataset, variant, method, P, R, size_train_percent, size_val_percent, si
                     ]
 
     ################### Starting the train of models ##################################
-    for _id, clf, parameters in classifiers:
+    for name_clf, clf, parameters in classifiers:
         np.random.seed(10)
         res_curr_val = {} # resultados do experimentos com o conjunto de validacao
         res_curr_test = {} # resultados do experimentos com o conjunto de test
         print(35 * ' # ')
-        print('Classificando com {}...'.format(_id))
+        print('Classificando com {}...'.format(name_clf))
 
         # CROSS-VALIDATION HOLD OUT --> train: 0.8, val:0.1, test: 0.1
         
@@ -171,13 +176,15 @@ def run(dataset, variant, method, P, R, size_train_percent, size_val_percent, si
 
         ################### Computing Performance #################################
         # Compute ROC curve and area the curve
-        #plot_results(_id, res_search['best_clf'], x_val, y_val, method.upper(), VARIANTS[variant], P, R, output)
+        plot_results(name_clf, res_search_val['best_clf'], x_val, y_val, method.upper(), ALGORITHM[variant][1], P, R, output, 'val')
+
+        plot_results(name_clf, res_search_val['best_clf'], x_test, y_test, method.upper(), ALGORITHM[variant][1], P, R, output, 'test')
 
         # Get AUC, F1Score and Accuracy metrics from Validation and Test 
         print(25 * '-')
         print('Melhor Parametro: ', res_search_val['best_parameter']) 
         
-        # VALIDATION
+        # VALIDACAO
         auc_roc_val = res_search_val['auc']
         f1score_val = res_search_val['f1score']
         accuracy_val = res_search_val['accuracy']
@@ -189,7 +196,7 @@ def run(dataset, variant, method, P, R, size_train_percent, size_val_percent, si
         print('AUC Validation:', auc_roc_val)
         print('Matthews Validation:', matthews_val)
 
-        header = (_id, ALGORITHM[variant][1], method, P, R, res_search_val['best_parameter'])
+        header = (name_clf, ALGORITHM[variant][1], method, P, R, res_search_val['best_parameter'])
         
         # adicionando resultados do conjunto de validacao aos resultados do melhor modelo
         def_res_val = add_to_df(*header, matthews_val, f1score_val, \
@@ -214,15 +221,6 @@ def run(dataset, variant, method, P, R, size_train_percent, size_val_percent, si
                     accuracy_test, matrix_test, auc_roc_test, n_features, False)
 
         df_results = df_results.append(def_res_test, ignore_index=True)
-
-        # salvando y_pred do conjunto de validacao e teste
-        y_pred_val  = res_search_val['best_clf'].predict(x_val)
-        y_pred_test = res_search_val['best_clf'].predict(x_test)
-        arr_filename = os.path.join(output, 'ARR_ROC', '{}_{}_y_pred_val_{}_{}_{}.txt'.format(variant, _id, method, P, R))
-        np.savetxt(arr_filename, y_pred_val)
-        arr_filename = os.path.join(output,'ARR_ROC','{}_{}_y_pred_test_{}_{}_{}.txt'.format(variant, _id, method, P, R))
-        np.savetxt(arr_filename, y_pred_test)
-
 
     df_results.to_csv(output + '/results.csv', index=False)
 
