@@ -214,7 +214,7 @@ def run(dataset, variant, method, P, R, size_train_percent, size_val_percent, si
         print('F1Score Test:' , f1score_test)
         print('Accuracy Test:', accuracy_test)
         print('AUC Test:', auc_roc_test)
-        print('Matthews Validation:', matthews_test)
+        print('Matthews Test:', matthews_test)
 
         # adicionando resultados do conjunto de teste ao dataframe, baseado no melhor modelo
         def_res_test = add_to_df(*header, matthews_test, f1score_test, \
