@@ -1,4 +1,4 @@
-# Local Binary Patterns: Overview and Application on Helicobacter Pylory
+# Local Binary Patterns and Its Extension Applied on Helicobacter Pylory Histopathologic Images
 
 Contains all the useful scripts for performing experiments with LBP and its variants.
 
